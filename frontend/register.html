@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Register - Sugar Dating</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h2>Register</h2>
+  <input type="text" id="name" placeholder="Name">
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+  <input type="date" id="dob" placeholder="Date of Birth">
+  <select id="role">
+    <option value="sugar_mummy">Sugar Mummy</option>
+    <option value="sugar_daddy">Sugar Daddy</option>
+    <option value="young_adult">Young Adult</option>
+  </select>
+  <button onclick="register()">Register</button>
+  <p id="message"></p>
+  <p>Already have an account? <a href="login.html">Login</a></p>
+</div>
+
+<script>
+async function register() {
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const dob = document.getElementById("dob").value;
+  const role = document.getElementById("role").value;
+
+  const res = await fetch("http://localhost:5000/api/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password, dateOfBirth: dob, role })
+  });
+
+  const data = await res.json();
+  document.getElementById("message").innerText = data.message || data.error;
+}
+</script>
+</body>
+</html>
