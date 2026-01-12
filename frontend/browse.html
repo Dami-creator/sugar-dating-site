@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Browse Profiles - Sugar Dating</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h2>Browse Profiles</h2>
+  <div id="profiles"></div>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<script>
+const token = localStorage.getItem("token");
+
+async function loadProfiles() {
+  const res = await fetch("http://localhost:5000/api/profiles", {
+    headers: { "Authorization": "Bearer " + token }
+  });
+
+  const users = await res.json();
+  const container = document.getElementById("profiles");
+  container.innerHTML = "";
+
+  users.forEach(user => {
+    const card = document.createElement("div");
+    card.className = "profile-card";
+    card.innerHTML = `
+      <h3>${user.name} (${user.role})</h3>
+      <p>${user.bio}</p>
+      <p>${user.location}</p>
+      ${user.photos.map(p => `<img src="${p}">`).join("")}
+      <p>Membership: ${user.membership}</p>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function logout() {
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+
+loadProfiles();
+</script>
+</body>
+</html>
