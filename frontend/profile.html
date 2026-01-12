@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Update Profile - Sugar Dating</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h2>Update Profile</h2>
+  <textarea id="bio" placeholder="Bio"></textarea>
+  <input type="text" id="location" placeholder="Location">
+  <input type="text" id="photos" placeholder="Photos (comma separated URLs)">
+  <button onclick="updateProfile()">Update</button>
+  <p id="message"></p>
+</div>
+
+<script>
+const token = localStorage.getItem("token");
+
+async function updateProfile() {
+  const bio = document.getElementById("bio").value;
+  const location = document.getElementById("location").value;
+  const photos = document.getElementById("photos").value.split(",");
+
+  const res = await fetch("http://localhost:5000/api/profiles", {
+    method: "PUT",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({ bio, location, photos })
+  });
+
+  const data = await res.json();
+  document.getElementById("message").innerText = data.message;
+}
+</script>
+</body>
+</html>
