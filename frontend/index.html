@@ -11,34 +11,43 @@
   <input type="text" id="name" placeholder="Name">
   <input type="email" id="email" placeholder="Email">
   <input type="password" id="password" placeholder="Password">
-  <input type="date" id="dob" placeholder="Date of Birth">
+  <input type="date" id="dob">
   <select id="role">
     <option value="sugar_mummy">Sugar Mummy</option>
-    <option value="sugar_daddy">Sugar Daddy</option>
     <option value="young_adult">Young Adult</option>
   </select>
-  <button onclick="register()">Register</button>
+  <button id="registerBtn">Register</button>
   <p id="message"></p>
   <p>Already have an account? <a href="login.html">Login</a></p>
 </div>
 
 <script>
-async function register() {
+document.getElementById("registerBtn").addEventListener("click", async () => {
   const name = document.getElementById("name").value;
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
   const dob = document.getElementById("dob").value;
   const role = document.getElementById("role").value;
 
-  const res = await fetch("https://sugar-dating-backend.onrender.com/api/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, password, dateOfBirth: dob, role })
-  });
+  try {
+    const res = await fetch("https://sugar-dating-backend.onrender.com/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password, dateOfBirth: dob, role })
+    });
 
-  const data = await res.json();
-  document.getElementById("message").innerText = data.message || data.error;
-}
+    const data = await res.json();
+    if (data.error) {
+      document.getElementById("message").innerText = data.error;
+    } else {
+      document.getElementById("message").innerText = data.message;
+      // redirect to login page after successful registration
+      setTimeout(() => window.location.href = "login.html", 1500);
+    }
+  } catch (err) {
+    document.getElementById("message").innerText = "Network error. Try again.";
+  }
+});
 </script>
 </body>
 </html>
