@@ -7,57 +7,45 @@
 </head>
 <body>
 <div class="container">
-  <h2>Browse Sugar Profiles</h2>
-  <div id="profiles"></div>
-  <button onclick="logout()">Logout</button>
+<h2>Browse Sugar Profiles</h2>
+<div id="profiles"></div>
+<button onclick="logout()">Logout</button>
 </div>
 
 <script>
 const token = localStorage.getItem("token");
+const user = JSON.parse(localStorage.getItem("user"));
+if(!token) window.location.href="login.html";
 
-async function loadProfiles() {
-  if (!token) {
-    window.location.href = "login.html";
-    return;
-  }
-
-  try {
-    const res = await fetch("https://sugar-dating-site.onrender.com/api/users", {
-      headers: { "Authorization": `Bearer ${token}` }
+async function loadProfiles(){
+  try{
+    const res = await fetch("https://sugar-dating-site.onrender.com/api/users",{
+      headers: {"Authorization":`Bearer ${token}`}
     });
-
-    // Check HTTP response
-    if (!res.ok) throw new Error("HTTP error " + res.status);
-
+    if(!res.ok) throw new Error("HTTP "+res.status);
     const data = await res.json();
     const container = document.getElementById("profiles");
-
-    if (data.error) {
-      container.innerHTML = `<p>${data.error}</p>`;
-      return;
-    }
-
-    container.innerHTML = data.map(user => `
+    if(data.error){ container.innerHTML=`<p>${data.error}</p>`; return;}
+    container.innerHTML = data.map(u=>`
       <div class="profile-card">
-        <h3>${user.name} (${user.role})</h3>
-        <p>Email: ${user.email}</p>
-        <p>DOB: ${user.dateOfBirth}</p>
+        <img src="${u.image}" alt="${u.name}" width="150" height="150">
+        <h3>${u.name} (${u.role})</h3>
+        <p>Email: ${u.email}</p>
+        <p>DOB: ${u.dateOfBirth}</p>
+        ${user.premium?"": "<p>Upgrade to premium to see all profiles</p>"}
       </div>
     `).join("");
-
-  } catch (err) {
-    document.getElementById("profiles").innerHTML = "<p>Network error. Check backend URL and token.</p>";
-    console.log("Fetch error:", err);
+  }catch(err){
+    console.log(err);
+    document.getElementById("profiles").innerHTML="<p>Network error. Check backend URL and token.</p>";
   }
 }
-
-function logout() {
+function logout(){
   localStorage.removeItem("token");
   localStorage.removeItem("user");
-  window.location.href = "login.html";
+  window.location.href="login.html";
 }
-
-window.onload = loadProfiles;
+window.onload=loadProfiles;
 </script>
 </body>
 </html>
