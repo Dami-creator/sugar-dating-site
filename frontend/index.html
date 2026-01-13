@@ -7,18 +7,19 @@
 </head>
 <body>
 <div class="container">
-  <h2>Register</h2>
-  <input type="text" id="name" placeholder="Name">
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="password" placeholder="Password">
-  <input type="date" id="dob">
-  <select id="role">
-    <option value="sugar_mummy">Sugar Mummy</option>
-    <option value="young_adult">Young Adult</option>
-  </select>
-  <button id="registerBtn">Register</button>
-  <p id="message"></p>
-  <p>Already have an account? <a href="login.html">Login</a></p>
+<h2>Register</h2>
+<input type="text" id="name" placeholder="Name">
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password">
+<input type="date" id="dob">
+<select id="role">
+  <option value="sugar_mummy">Sugar Mummy</option>
+  <option value="young_adult">Young Adult</option>
+</select>
+<input type="text" id="image" placeholder="Profile Image URL (optional)">
+<button id="registerBtn">Register</button>
+<p id="message"></p>
+<p>Already have account? <a href="login.html">Login</a></p>
 </div>
 
 <script>
@@ -28,23 +29,19 @@ document.getElementById("registerBtn").addEventListener("click", async () => {
   const password = document.getElementById("password").value;
   const dob = document.getElementById("dob").value;
   const role = document.getElementById("role").value;
+  const image = document.getElementById("image").value || "https://via.placeholder.com/150";
 
   try {
     const res = await fetch("https://sugar-dating-site.onrender.com/api/auth/register", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, dateOfBirth: dob, role })
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({name,email,password,dateOfBirth: dob,role,image})
     });
-
     const data = await res.json();
-    if (data.error) {
-      document.getElementById("message").innerText = data.error;
-    } else {
-      document.getElementById("message").innerText = data.message;
-      setTimeout(() => window.location.href = "login.html", 1500);
-    }
-  } catch (err) {
-    document.getElementById("message").innerText = "Network error. Try again.";
+    document.getElementById("message").innerText = data.error || data.message;
+    if (data.message) setTimeout(()=> window.location.href="login.html",1500);
+  } catch {
+    document.getElementById("message").innerText = "Network error";
   }
 });
 </script>
