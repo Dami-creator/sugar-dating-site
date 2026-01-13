@@ -7,15 +7,17 @@
 </head>
 <body>
 <div class="container">
-  <h2>Update Profile</h2>
+  <h2>Update Your Profile</h2>
+
   <input type="text" id="name" placeholder="Name">
-  <input type="password" id="password" placeholder="New Password">
+  <input type="password" id="password" placeholder="New Password (optional)">
   <input type="date" id="dob">
   <select id="role">
     <option value="sugar_mummy">Sugar Mummy</option>
     <option value="young_adult">Young Adult</option>
   </select>
-  <button id="updateBtn">Update</button>
+
+  <button id="updateBtn">Update Profile</button>
   <p id="message"></p>
   <button onclick="logout()">Logout</button>
 </div>
@@ -24,13 +26,17 @@
 const token = localStorage.getItem("token");
 const user = JSON.parse(localStorage.getItem("user"));
 
-if (!token) window.location.href = "login.html";
+if (!token) {
+  // Not logged in → redirect to login
+  window.location.href = "login.html";
+}
 
-// Pre-fill current info
+// Pre-fill user info
 document.getElementById("name").value = user.name;
 document.getElementById("dob").value = user.dateOfBirth;
 document.getElementById("role").value = user.role;
 
+// Update profile handler
 document.getElementById("updateBtn").addEventListener("click", async () => {
   const name = document.getElementById("name").value;
   const password = document.getElementById("password").value;
@@ -40,21 +46,31 @@ document.getElementById("updateBtn").addEventListener("click", async () => {
   try {
     const res = await fetch(`https://sugar-dating-site.onrender.com/api/users/${user.email}`, {
       method: "PUT",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
       },
       body: JSON.stringify({ name, password, dateOfBirth: dob, role })
     });
 
+    // Check HTTP response
+    if (!res.ok) throw new Error("HTTP error " + res.status);
+
     const data = await res.json();
     document.getElementById("message").innerText = data.message || data.error;
 
-  } catch {
+    // Update localStorage user info
+    if (data.message) {
+      localStorage.setItem("user", JSON.stringify({ ...user, name, dateOfBirth: dob, role }));
+    }
+
+  } catch (err) {
+    console.log("Update error:", err);
     document.getElementById("message").innerText = "Network error. Try again.";
   }
 });
 
+// Logout function
 function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
