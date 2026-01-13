@@ -7,7 +7,11 @@
 </head>
 <body>
 <div class="container">
-  <h2>Update Your Profile</h2>
+  <h2>Your Profile</h2>
+
+  <img id="currentImage" src="" alt="Profile Image" width="150" height="150"><br>
+
+  <p>Status: <span id="status"></span></p>
 
   <input type="text" id="name" placeholder="Name">
   <input type="password" id="password" placeholder="New Password (optional)">
@@ -16,65 +20,142 @@
     <option value="sugar_mummy">Sugar Mummy</option>
     <option value="young_adult">Young Adult</option>
   </select>
+  <input type="text" id="image" placeholder="Profile Image URL">
 
   <button id="updateBtn">Update Profile</button>
   <p id="message"></p>
+
+  <div id="upgradeDiv">
+    <button id="upgradeBtn">Upgrade to Premium</button>
+    <p id="upgradeMessage"></p>
+  </div>
+
+  <h3>Browse Sugar Mummy Profiles</h3>
+  <div id="profiles"></div>
+
   <button onclick="logout()">Logout</button>
 </div>
 
 <script>
 const token = localStorage.getItem("token");
-const user = JSON.parse(localStorage.getItem("user"));
+let user = JSON.parse(localStorage.getItem("user"));
 
-if (!token) {
-  // Not logged in → redirect to login
-  window.location.href = "login.html";
-}
+if(!token) window.location.href = "login.html";
 
-// Pre-fill user info
+// Show user info
 document.getElementById("name").value = user.name;
 document.getElementById("dob").value = user.dateOfBirth;
 document.getElementById("role").value = user.role;
+document.getElementById("image").value = user.image;
+document.getElementById("currentImage").src = user.image;
 
-// Update profile handler
+// Show status
+const statusSpan = document.getElementById("status");
+function updateStatus() {
+  if (user.premium) statusSpan.innerText = "Premium";
+  else if (user.pendingUpgrade) statusSpan.innerText = "Pending Upgrade";
+  else statusSpan.innerText = "Free";
+}
+updateStatus();
+
+// Update profile
 document.getElementById("updateBtn").addEventListener("click", async () => {
   const name = document.getElementById("name").value;
   const password = document.getElementById("password").value;
   const dob = document.getElementById("dob").value;
   const role = document.getElementById("role").value;
+  const image = document.getElementById("image").value || "https://via.placeholder.com/150";
 
   try {
     const res = await fetch(`https://sugar-dating-site.onrender.com/api/users/${user.email}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({ name, password, dateOfBirth: dob, role })
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      body: JSON.stringify({ name, password, dateOfBirth: dob, role, image })
     });
-
-    // Check HTTP response
-    if (!res.ok) throw new Error("HTTP error " + res.status);
-
     const data = await res.json();
     document.getElementById("message").innerText = data.message || data.error;
-
-    // Update localStorage user info
-    if (data.message) {
-      localStorage.setItem("user", JSON.stringify({ ...user, name, dateOfBirth: dob, role }));
+    if(data.message){
+      user = { ...user, name, dateOfBirth: dob, role, image };
+      localStorage.setItem("user", JSON.stringify(user));
+      document.getElementById("currentImage").src = image;
     }
-
-  } catch (err) {
-    console.log("Update error:", err);
+  } catch {
     document.getElementById("message").innerText = "Network error. Try again.";
   }
 });
 
-// Logout function
-function logout() {
+// Manual Upgrade
+const upgradeBtn = document.getElementById("upgradeBtn");
+const upgradeMessage = document.getElementById("upgradeMessage");
+
+upgradeBtn.addEventListener("click", async () => {
+  const confirmPayment = confirm(
+    "To upgrade to Premium, please pay 5,000 Naira to 2035470745, Kuda MFB.\nClick OK once you have completed payment."
+  );
+  if(!confirmPayment) return;
+
+  try {
+    const res = await fetch(`https://sugar-dating-site.onrender.com/api/users/request-upgrade/${user.email}`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const data = await res.json();
+    upgradeMessage.innerText = data.message || data.error;
+    if(data.message){
+      user.pendingUpgrade = true;
+      localStorage.setItem("user", JSON.stringify(user));
+      upgradeBtn.style.display = "none";
+      updateStatus();
+    }
+  } catch {
+    upgradeMessage.innerText = "Network error. Try again.";
+  }
+});
+
+// Browse Sugar Mummy Profiles
+async function loadProfiles() {
+  try {
+    const res = await fetch("https://sugar-dating-site.onrender.com/api/users", {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const data = await res.json();
+    const container = document.getElementById("profiles");
+
+    if(data.error) { container.innerHTML = `<p>${data.error}</p>`; return; }
+    if(data.length === 0){ container.innerHTML = "<p>No profiles available.</p>"; return; }
+
+    container.innerHTML = data
+      .filter(u => u.role === "sugar_mummy") // only show sugar mummies
+      .map(u => `
+      <div class="profile-card">
+        <img src="${u.image}" alt="${u.name}" width="150" height="150">
+        <h3>${u.name}</h3>
+        <p>DOB: ${u.dateOfBirth}</p>
+        ${user.premium ? `<button onclick="startChat('${u.email}','${u.name}')">Chat</button>` : "<p>Premium only</p>"}
+      </div>
+    `).join("");
+
+  } catch(err) {
+    console.log(err);
+    document.getElementById("profiles").innerHTML = "<p>Network error.</p>";
+  }
+}
+window.onload = loadProfiles;
+
+// Start chat (premium only)
+function startChat(email,name){
+  if(!user.premium){
+    alert("Only premium users can chat with sugar mummies.");
+    return;
+  }
+  alert(`Starting chat with ${name} (${email})\n(You can integrate chat system later)`);
+}
+
+// Logout
+function logout(){
   localStorage.removeItem("token");
   localStorage.removeItem("user");
-  window.location.href = "login.html";
+  window.location.href="login.html";
 }
 </script>
 </body>
